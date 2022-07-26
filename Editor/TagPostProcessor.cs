@@ -7,14 +7,15 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 namespace com.darktable.utility {
     public class TagPostProcessor : UnityEditor.AssetModificationProcessor {
-        private const string HEADER = "/* AUTO GENERATED FILE DO NOT MODIFY */\n\n";
+        private const string HEADER = "/* AUTO GENERATED FILE DO NOT MODIFY\n (created by TagPostProcessor.cs. File->Save Project will usually trigger an update of this file) */\n\n";
         private const string STANDARD_ASSETS = "Standard Assets";
         private const string DIRECTORY_NAME = "Tag Constants";
         private const string FILE_NAME = "TagConstants.cs";
-        private static readonly string[] SAVED_ASSETS = new[] { "NavMeshAreas.asset", "TagManager.asset" };
+        private static readonly string[] SAVED_ASSETS = new[] { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset" };
 
         private const string ASM_DEF_FILENAME = "com.darktable.tagconstants.asmdef";
         private const string ASM_DEF_CONTENTS = "{\"name\": \"com.darktable.tagconstants\"}";
@@ -112,6 +113,15 @@ namespace com.darktable.utility {
             }
 
             outfile.AppendLine("}\n");
+
+            outfile.AppendLine("public static class LayerName\n{");
+
+            foreach (var kvp in nameCollisions) {
+                outfile.AppendLine($"    public const string {kvp.Key} = \"{kvp.Value}\";");
+            }
+
+            outfile.AppendLine("}\n");
+
         }
 
         private static void UpdateSortingLayerList(StringBuilder outfile) {
@@ -160,6 +170,52 @@ namespace com.darktable.utility {
             outfile.AppendLine("}\n");
         }
 
+        private static void UpdateSceneList(StringBuilder outfile) {
+            outfile.AppendLine("public static class SceneName\n{");
+            var nameCollisions = new Dictionary<string, string>();
+            int count = SceneManager.sceneCountInBuildSettings;
+
+            var sceneNames = new string[count];
+
+            for (var i = 0; i < count; i++) {
+                string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
+
+                if (string.IsNullOrEmpty(scenePath)) {
+                    continue;
+                }
+
+                string sceneName = Path.GetFileNameWithoutExtension(scenePath);
+                string sanitizedSceneName = SanitizeVariableName(sceneName);
+
+                if (nameCollisions.TryGetValue(sanitizedSceneName, out var collision)) {
+                    Debug.LogError($"Two scenes with same sanitized name: \"{collision}\", \"{sceneName}\" = \"{sanitizedSceneName}\"");
+
+                    continue;
+                }
+
+                nameCollisions.Add(sanitizedSceneName, sceneName);
+
+                outfile.AppendLine($"    public const string {sanitizedSceneName} = \"{sceneName}\";");
+                sceneNames[i] = sanitizedSceneName;
+            }
+
+            outfile.AppendLine("}\n");
+
+            outfile.AppendLine("public static class SceneIndex\n{");
+
+            for (var i = 0; i < count; i++) {
+                string name = sceneNames[i];
+
+                if (string.IsNullOrEmpty(name)) {
+                    continue;
+                }
+
+                outfile.AppendLine($"    public const int {name} = {i};");
+            }
+
+            outfile.AppendLine("}\n");
+        }
+
         private static void UpdateTagsConstants() {
             string rootPath = Path.Combine(Application.dataPath, STANDARD_ASSETS, DIRECTORY_NAME);
 
@@ -188,6 +244,8 @@ namespace com.darktable.utility {
             UpdateLayerList(builder);
 
             UpdateNavAgentsList(builder);
+
+            UpdateSceneList(builder);
 
             var updated = builder.ToString();
 
