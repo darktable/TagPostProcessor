@@ -66,7 +66,7 @@ namespace com.darktable.utility {
         private static void UpdateTagList(StringBuilder outfile) {
             var nameCollisions = new Dictionary<string, string>();
 
-            outfile.AppendLine("public static class TagConstant\n{");
+            outfile.Append("public static class TagConstant\n{\n");
 
             foreach (string tag in InternalEditorUtility.tags) {
                 string sanitisedTag = SanitizeVariableName(tag);
@@ -79,16 +79,16 @@ namespace com.darktable.utility {
 
                 nameCollisions.Add(sanitisedTag, tag);
 
-                outfile.AppendLine($"    public const string {sanitisedTag} = \"{tag}\";");
+                outfile.Append($"    public const string {sanitisedTag} = \"{tag}\";\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
         }
 
         private static void UpdateLayerList(StringBuilder outfile) {
             var nameCollisions = new Dictionary<string, string>();
 
-            outfile.AppendLine("public static class LayerConstant\n{");
+            outfile.Append("public static class LayerConstant\n{\n");
 
             foreach (string layer in InternalEditorUtility.layers) {
                 string sanitizedLayer = SanitizeVariableName(layer);
@@ -101,33 +101,33 @@ namespace com.darktable.utility {
 
                 nameCollisions.Add(sanitizedLayer, layer);
 
-                outfile.AppendLine($"    public const int {sanitizedLayer} = {LayerMask.NameToLayer(layer)};");
+                outfile.Append($"    public const int {sanitizedLayer} = {LayerMask.NameToLayer(layer)};\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
 
-            outfile.AppendLine("[System.Flags]\npublic enum LayerFlag\n{");
+            outfile.Append("[System.Flags]\npublic enum LayerFlag\n{\n");
 
             foreach (var kvp in nameCollisions) {
-                outfile.AppendLine($"    {kvp.Key} = 1 << {LayerMask.NameToLayer(kvp.Value)},");
+                outfile.Append($"    {kvp.Key} = 1 << {LayerMask.NameToLayer(kvp.Value)},\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
 
-            outfile.AppendLine("public static class LayerName\n{");
+            outfile.Append("public static class LayerName\n{\n");
 
             foreach (var kvp in nameCollisions) {
-                outfile.AppendLine($"    public const string {kvp.Key} = \"{kvp.Value}\";");
+                outfile.Append($"    public const string {kvp.Key} = \"{kvp.Value}\";\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
 
         }
 
         private static void UpdateSortingLayerList(StringBuilder outfile) {
             var nameCollisions = new Dictionary<string, string>();
 
-            outfile.AppendLine("public static class SortingLayerConstant\n{");
+            outfile.Append("public static class SortingLayerConstant\n{\n");
 
             foreach (var sortingLayer in SortingLayer.layers) {
                 string name = sortingLayer.name;
@@ -141,14 +141,14 @@ namespace com.darktable.utility {
 
                 nameCollisions.Add(sanitizedLayer, name);
 
-                outfile.AppendLine($"    public const int {sanitizedLayer} = {sortingLayer.id};");
+                outfile.Append($"    public const int {sanitizedLayer} = {sortingLayer.id};\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
         }
 
         private static void UpdateNavAgentsList(StringBuilder outfile) {
-            outfile.AppendLine("public static class NavMeshAgentID\n{");
+            outfile.Append("public static class NavMeshAgentID\n{\n");
             var nameCollisions = new Dictionary<string, string>();
             int count = NavMesh.GetSettingsCount();
             for (var i = 0; i < count; i++) {
@@ -164,14 +164,14 @@ namespace com.darktable.utility {
 
                 nameCollisions.Add(sanitizedAgentName, agentName);
 
-                outfile.AppendLine($"    public const int {sanitizedAgentName} = {agentTypeID};");
+                outfile.Append($"    public const int {sanitizedAgentName} = {agentTypeID};\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
         }
 
         private static void UpdateSceneList(StringBuilder outfile) {
-            outfile.AppendLine("public static class SceneName\n{");
+            outfile.Append("public static class SceneName\n{\n");
             var nameCollisions = new Dictionary<string, string>();
             int count = SceneManager.sceneCountInBuildSettings;
 
@@ -195,13 +195,13 @@ namespace com.darktable.utility {
 
                 nameCollisions.Add(sanitizedSceneName, sceneName);
 
-                outfile.AppendLine($"    public const string {sanitizedSceneName} = \"{sceneName}\";");
+                outfile.Append($"    public const string {sanitizedSceneName} = \"{sceneName}\";\n");
                 sceneNames[i] = sanitizedSceneName;
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
 
-            outfile.AppendLine("public static class SceneIndex\n{");
+            outfile.Append("public static class SceneIndex\n{\n");
 
             for (var i = 0; i < count; i++) {
                 string name = sceneNames[i];
@@ -210,10 +210,10 @@ namespace com.darktable.utility {
                     continue;
                 }
 
-                outfile.AppendLine($"    public const int {name} = {i};");
+                outfile.Append($"    public const int {name} = {i};\n");
             }
 
-            outfile.AppendLine("}\n");
+            outfile.Append("}\n\n");
         }
 
         private static void UpdateTagsConstants() {
