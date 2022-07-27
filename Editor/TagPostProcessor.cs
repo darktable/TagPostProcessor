@@ -13,7 +13,7 @@ namespace com.darktable.utility {
     public class TagPostProcessor : UnityEditor.AssetModificationProcessor {
         private const string HEADER = "/* AUTO GENERATED FILE DO NOT MODIFY\n (created by TagPostProcessor.cs. File->Save Project will usually trigger an update of this file) */\n\n";
         private const string STANDARD_ASSETS = "Standard Assets";
-        private const string DIRECTORY_NAME = "Tag Constants";
+        private const string DIRECTORY_NAME = "Scripts/Tag Constants";
         private const string FILE_NAME = "TagConstants.cs";
         private static readonly string[] SAVED_ASSETS = new[] { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset" };
 
