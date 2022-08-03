@@ -1,4 +1,3 @@
-# ---> Unity
 # This .gitignore file should be placed at the root of your Unity project directory
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
@@ -84,3 +83,26 @@ crashlytics-build.properties
 # Hide junk in the _Attic
 **/_[aA]ttic/
 **/_[aA]ttic.meta
+
+# Lightmaps and ReflectionProbes are large, change frequently, and can be generated locally.
+Assets/**/Lightmap-*.*
+Assets/**/Lightmap-*.*.meta
+Assets/**/ReflectionProbe-*.*
+Assets/**/ReflectionProbe-*.*.meta
+
+# Oculus plugins for platforms we don't care about.
+**/Plugins/MacOSX.meta
+**/Plugins/MacOSX/
+**/Plugins/**/Win.meta
+**/Plugins/**/Win/
+**/Plugins/**/x86.meta
+**/Plugins/**/x86/
+**/Plugins/Android32.meta
+**/Plugins/Android32/
+**/Plugins/AndroidUniversal.meta
+**/Plugins/AndroidUniversal/
+
+# PDF file that everyone has easy access to.
+Assets/TextMesh Pro/Documentation/
+Assets/TextMesh Pro/Documentation.meta
+
