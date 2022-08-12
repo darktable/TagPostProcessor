@@ -243,6 +243,23 @@ namespace com.darktable.utility
             }
 
             outfile.Append("}\n\n");
+
+            outfile.Append("public enum SceneEnum\n{\n");
+
+            for (var i = 0; i < count; i++)
+            {
+                string name = sceneNames[i];
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    continue;
+                }
+
+                outfile.Append($"    {name} = {i},\n");
+            }
+
+            outfile.Append("}\n\n");
+
         }
 
         private static void UpdateTagsConstants()
