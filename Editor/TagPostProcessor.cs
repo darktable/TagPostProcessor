@@ -131,6 +131,14 @@ namespace com.darktable.utility
 
             outfile.Append("}\n\n");
 
+            outfile.AppendLine("public enum LayerEnum\n{");
+
+            foreach (var kvp in nameCollisions) {
+                outfile.AppendLine($"    {kvp.Key} = {LayerMask.NameToLayer(kvp.Value)},");
+            }
+
+            outfile.AppendLine("}\n");
+
             outfile.Append("public static class LayerName\n{\n");
 
             foreach (var kvp in nameCollisions)
