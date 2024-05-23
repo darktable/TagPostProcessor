@@ -8,6 +8,9 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
+#if XR_INTERACTION
+using UnityEngine.XR.Interaction.Toolkit;
+#endif
 
 namespace com.darktable.utility
 {
@@ -17,7 +20,7 @@ namespace com.darktable.utility
         private const string k_StandardAssets = "Standard Assets";
         private const string k_DirectoryName = "Scripts/Tag Constants";
         private const string k_FileName = "TagConstants.cs";
-        private static readonly string[] k_SavedAssets = new[] { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset" };
+        private static readonly string[] k_SavedAssets = new[] { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset", "InteractionLayerSettings.asset" };
 
         private const string k_AsmDefFilename = "com.darktable.tagconstants.asmdef";
         private const string k_AsmDefContents = "{\"name\": \"com.darktable.tagconstants\"}";
@@ -83,14 +86,12 @@ namespace com.darktable.utility
             {
                 string sanitisedTag = SanitizeVariableName(tag);
 
-                if (nameCollisions.TryGetValue(sanitisedTag, out var collision))
+                if (!nameCollisions.TryAdd(sanitisedTag, tag))
                 {
-                    Debug.LogError($"Two tags with same sanitized name: \"{collision}\", \"{tag}\" = \"{sanitisedTag}\"");
+                    Debug.LogWarning($"Two tags with same sanitized name: \"{tag}\", \"{tag}\" = \"{sanitisedTag}\"");
 
                     continue;
                 }
-
-                nameCollisions.Add(sanitisedTag, tag);
 
                 outfile.Append($"    public const string {sanitisedTag} = \"{tag}\";\n");
             }
@@ -108,14 +109,12 @@ namespace com.darktable.utility
             {
                 string sanitizedLayer = SanitizeVariableName(layer);
 
-                if (nameCollisions.TryGetValue(sanitizedLayer, out string collision))
+                if (!nameCollisions.TryAdd(sanitizedLayer, layer))
                 {
-                    Debug.LogError($"Two layers with same sanitized name: \"{collision}\", \"{layer}\" = \"{sanitizedLayer}\"");
+                    Debug.LogWarning($"Two layers with same sanitized name: \"{layer}\", \"{layer}\" = \"{sanitizedLayer}\"");
 
                     continue;
                 }
-
-                nameCollisions.Add(sanitizedLayer, layer);
 
                 outfile.Append($"    public const int {sanitizedLayer} = {LayerMask.NameToLayer(layer)};\n");
             }
@@ -160,14 +159,12 @@ namespace com.darktable.utility
                 string name = sortingLayer.name;
                 string sanitizedLayer = SanitizeVariableName(name);
 
-                if (nameCollisions.TryGetValue(sanitizedLayer, out string collision))
+                if (!nameCollisions.TryAdd(sanitizedLayer, name))
                 {
-                    Debug.LogError($"Two layers with same sanitized name: \"{collision}\", \"{name}\" = \"{sanitizedLayer}\"");
+                    Debug.LogWarning($"Two layers with same sanitized name: \"{name}\", \"{name}\" = \"{sanitizedLayer}\"");
 
                     continue;
                 }
-
-                nameCollisions.Add(sanitizedLayer, name);
 
                 outfile.Append($"    public const int {sanitizedLayer} = {sortingLayer.id};\n");
             }
@@ -186,14 +183,12 @@ namespace com.darktable.utility
                 string agentName = NavMesh.GetSettingsNameFromID(agentTypeID);
                 string sanitizedAgentName = SanitizeVariableName(agentName);
 
-                if (nameCollisions.TryGetValue(sanitizedAgentName, out var collision))
+                if (!nameCollisions.TryAdd(sanitizedAgentName, agentName))
                 {
-                    Debug.LogError($"Two layers with same sanitized name: \"{collision}\", \"{agentName}\" = \"{sanitizedAgentName}\"");
+                    Debug.LogWarning($"Two layers with same sanitized name: \"{agentName}\", \"{agentName}\" = \"{sanitizedAgentName}\"");
 
                     continue;
                 }
-
-                nameCollisions.Add(sanitizedAgentName, agentName);
 
                 outfile.Append($"    public const int {sanitizedAgentName} = {agentTypeID};\n");
             }
@@ -221,14 +216,12 @@ namespace com.darktable.utility
                 string sceneName = Path.GetFileNameWithoutExtension(scenePath);
                 string sanitizedSceneName = SanitizeVariableName(sceneName);
 
-                if (nameCollisions.TryGetValue(sanitizedSceneName, out var collision))
+                if (!nameCollisions.TryAdd(sanitizedSceneName, sceneName))
                 {
-                    Debug.LogError($"Two scenes with same sanitized name: \"{collision}\", \"{sceneName}\" = \"{sanitizedSceneName}\"");
+                    Debug.LogWarning($"Two scenes with same sanitized name: \"{sceneName}\", \"{sceneName}\" = \"{sanitizedSceneName}\"");
 
                     continue;
                 }
-
-                nameCollisions.Add(sanitizedSceneName, sceneName);
 
                 outfile.Append($"    public const string {sanitizedSceneName} = \"{sceneName}\";\n");
                 sceneNames[i] = sanitizedSceneName;
@@ -270,6 +263,7 @@ namespace com.darktable.utility
 
         }
 
+        [MenuItem("Tools/Update TagConstants.cs")]
         private static void UpdateTagsConstants()
         {
             string rootPath = Path.Combine(Application.dataPath, k_StandardAssets, k_DirectoryName);
@@ -305,6 +299,8 @@ namespace com.darktable.utility
 
             UpdateSceneList(builder);
 
+            UpdateInteractionLayers(builder);
+
             var updated = builder.ToString();
 
             if (!string.Equals(current, updated))
@@ -314,6 +310,64 @@ namespace com.darktable.utility
 
                 AssetDatabase.Refresh();
             }
+        }
+
+        private static void UpdateInteractionLayers(StringBuilder outfile)
+        {
+#if XR_INTERACTION
+            var nameCollisions = new Dictionary<string, string>();
+
+            outfile.Append("public static class InteractionLayerConstant\n{\n");
+
+            for (int i = 0; i < 32; i++)
+            {
+                var layer = InteractionLayerMask.LayerToName(i);
+
+                if (string.IsNullOrEmpty(layer))
+                {
+                    continue;
+                }
+
+                string sanitizedLayer = SanitizeVariableName(layer);
+
+                if (!nameCollisions.TryAdd(sanitizedLayer, layer))
+                {
+                    Debug.LogWarning($"Two layers with same sanitized name: \"{layer}\", \"{layer}\" = \"{sanitizedLayer}\"");
+
+                    continue;
+                }
+
+                outfile.Append($"    public const int {sanitizedLayer} = {InteractionLayerMask.NameToLayer(layer)};\n");
+            }
+
+            outfile.Append("}\n\n");
+
+            outfile.Append("[System.Flags]\npublic enum InteractionLayerFlag\n{\n");
+
+            foreach (var kvp in nameCollisions)
+            {
+                outfile.Append($"    {kvp.Key} = 1 << {InteractionLayerMask.NameToLayer(kvp.Value)},\n");
+            }
+
+            outfile.Append("}\n\n");
+
+            outfile.AppendLine("public enum InteractionLayerEnum\n{");
+
+            foreach (var kvp in nameCollisions) {
+                outfile.AppendLine($"    {kvp.Key} = {InteractionLayerMask.NameToLayer(kvp.Value)},");
+            }
+
+            outfile.AppendLine("}\n");
+
+            outfile.Append("public static class InteractionLayerName\n{\n");
+
+            foreach (var kvp in nameCollisions)
+            {
+                outfile.Append($"    public const string {kvp.Key} = \"{kvp.Value}\";\n");
+            }
+
+            outfile.Append("}\n\n");
+#endif
         }
     }
 }
