@@ -2,7 +2,7 @@
 {
     "name": "com.darktable.tagpostprocessor",
     "displayName": "Tag Post Processor",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "unity": "2018.4",
     "description": "Tag Post Processor.",
     "dependencies": { },
