@@ -2,7 +2,8 @@
     "name": "com.darktable.tagpostprocessor",
     "rootNamespace": "",
     "references": [
-        "Unity.XR.Interaction.Toolkit"
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -18,6 +19,11 @@
             "name": "com.unity.xr.interaction.toolkit",
             "expression": "0.0.1",
             "define": "XR_INTERACTION"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "0.0.1",
+            "define": "UNITY_URP"
         }
     ],
     "noEngineReferences": false
