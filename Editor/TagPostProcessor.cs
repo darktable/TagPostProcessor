@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
@@ -23,13 +24,16 @@ namespace com.darktable.utility
         private const string k_DirectoryName = "Scripts/Tag Constants";
         private const string k_FileName = "TagConstants.cs";
 
+        private static readonly string[] k_SavedAssets = new[]
+            { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset" };
+
         private const string k_AsmDefFilename = "com.darktable.tagconstants.asmdef";
         private const string k_AsmDefContents = "{\"name\": \"com.darktable.tagconstants\"}";
 
         private static readonly string[] s_WatchedAssets = new[]
-            {"NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset", "InteractionLayerSettings.asset"};
+            { "NavMeshAreas.asset", "TagManager.asset", "EditorBuildSettings.asset", "InteractionLayerSettings.asset" };
 
-        private static readonly string[] s_WatchedTypes = new[] {"UniversalRenderPipelineGlobalSettings"};
+        private static readonly string[] s_WatchedTypes = new[] { "UniversalRenderPipelineGlobalSettings" };
 
         private static readonly Regex s_NonWordRegEx = new Regex("[^a-zA-Z0-9]");
         private static readonly Regex s_PrefixNumberRegEx = new Regex("^[0-9]");
@@ -232,7 +236,7 @@ namespace com.darktable.utility
             var nameCollisions = new Dictionary<string, string>();
             var count = SceneManager.sceneCountInBuildSettings;
 
-            var sceneNames = new string[count];
+            var sceneInfo = new List<(string, int)>(count);
 
             for (var i = 0; i < count; i++)
             {
@@ -254,40 +258,58 @@ namespace com.darktable.utility
                     continue;
                 }
 
+                var loadedScene = EditorSceneManager.GetSceneByPath(scenePath);
+                int buildIndex;
+
+                if (loadedScene.IsValid())
+                {
+                    buildIndex = loadedScene.buildIndex;
+                }
+                else
+                {
+                    var unloadedScene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.AdditiveWithoutLoading);
+
+                    buildIndex = unloadedScene.buildIndex;
+
+                    EditorSceneManager.UnloadSceneAsync(unloadedScene);
+                }
+
+                if (buildIndex < 0)
+                {
+                    continue;
+                }
+
+                sceneInfo.Add((sanitizedSceneName, buildIndex));
+
                 outfile.Append($"    public const string {sanitizedSceneName} = \"{sceneName}\";\n");
-                sceneNames[i] = sanitizedSceneName;
             }
 
             outfile.Append("}\n\n");
 
             outfile.Append("public static class SceneIndex\n{\n");
 
-            for (var i = 0; i < count; i++)
+            foreach (var (name, buildIndex) in sceneInfo)
             {
-                var name = sceneNames[i];
-
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrEmpty(name) || buildIndex < 0)
                 {
                     continue;
                 }
 
-                outfile.Append($"    public const int {name} = {i};\n");
+                outfile.Append($"    public const int {name} = {buildIndex};\n");
             }
 
             outfile.Append("}\n\n");
 
             outfile.Append("public enum SceneEnum\n{\n");
 
-            for (var i = 0; i < count; i++)
+            foreach (var (name, buildIndex) in sceneInfo)
             {
-                var name = sceneNames[i];
-
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrEmpty(name) || buildIndex < 0)
                 {
                     continue;
                 }
 
-                outfile.Append($"    {name} = {i},\n");
+                outfile.Append($"    {name} = {buildIndex},\n");
             }
 
             outfile.Append("}\n\n");
