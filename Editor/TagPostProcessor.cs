@@ -58,7 +58,7 @@ namespace com.darktable.utility
             }
         }
 
-        [MenuItem("Tools/Update TagConstants.cs")]
+        [MenuItem("Tools/Utilities/Update TagConstants.cs")]
         private static void UpdateTagConstantsMenu()
         {
             AssetDatabase.SaveAssets();
